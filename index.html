@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://picocss.com/favicon.svg" type="image/svg+xml">
+
+  <title>Form Wizard - Máquina de Estado</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+  <link rel="stylesheet" href="assets/css/style.css">
+
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.12.0/dist/cdn.min.js"></script>
+</head>
+
+<body>
+  <div
+    class="container"
+    x-data="formWizard()"
+  >
+    <!-- START Toast container -->
+    <div class="toast-container">
+      <div
+        class="toast"
+        :class="{
+          'visible': toast.visible,
+          'removing': toast.removing,
+          'success': toast.type === 'success',
+          'error': toast.type === 'error'
+        }"
+        @click="hideToast"
+        x-show="toast.visible"
+      >
+        <span x-text="toast.message"></span>
+        <span class="toast-close">×</span>
+      </div>
+    </div>
+    <!-- END Toast container -->
+
+    <header>
+      <h1>Cadastro de Pessoa</h1>
+    </header>
+
+    <!-- START Seleção do tipo de cadastro -->
+    <section
+      class="tipo-cadastro"
+      x-show="currentState === 'inicio'"
+    >
+      <button
+        @click="selectTipo('fisica')"
+        :class="{ 'outline': tipo !== 'fisica' }"
+      >
+        Pessoa Física
+      </button>
+      <button
+        @click="selectTipo('juridica')"
+        :class="{ 'outline': tipo !== 'juridica' }"
+      >
+        Pessoa Jurídica
+      </button>
+    </section>
+    <!-- END Seleção do tipo de cadastro -->
+
+    <!-- START Navegação -->
+    <nav x-show="currentState !== 'inicio'">
+      <ul>
+        <li :class="{
+          'active': currentState === 'identificacao',
+          'completed': hasPassedState('identificacao')
+        }">Identificação</li>
+        <li :class="{
+          'active': currentState === 'documentos',
+          'completed': hasPassedState('documentos')
+        }">Documentos</li>
+        <li :class="{
+          'active': currentState === 'endereco',
+          'completed': hasPassedState('endereco')
+        }">Endereço</li>
+        <li :class="{
+          'active': currentState === 'confirmacao',
+          'completed': hasPassedState('confirmacao')
+        }">Confirmação</li>
+      </ul>
+    </nav>
+    <!-- END Navegação -->
+
+    <form @submit.prevent="handleSubmit">
+      <!-- START Estado: Identificação -->
+      <section x-show="currentState === 'identificacao'">
+        <fieldset>
+          <h2>Identificação</h2>
+          <label class="required">Nome:</label>
+          <input
+            type="text"
+            x-model="form.nome"
+            required
+          >
+          <label class="required">E-mail:</label>
+          <input
+            type="email"
+            x-model="form.email"
+            required
+          >
+          <div class="buttons">
+            <button
+              type="button"
+              @click="setState('inicio')"
+            >Anterior</button>
+            <button
+              type="button"
+              @click="nextState"
+            >Próximo</button>
+          </div>
+        </fieldset>
+      </section>
+      <!-- END Estado: Identificação -->
+
+      <!-- START Estado: Documentos -->
+      <section x-show="currentState === 'documentos'">
+        <h2>Documentos</h2>
+        <template x-if="tipo === 'fisica'">
+          <fieldset>
+            <label>CPF:
+              <input
+                type="text"
+                x-model="form.cpf"
+              >
+            </label>
+
+            <label>
+              RG:
+              <input
+                type="text"
+                x-model="form.rg"
+              >
+            </label>
+          </fieldset>
+        </template>
+        <template x-if="tipo === 'juridica'">
+          <fieldset>
+            <label>
+              CNPJ:
+              <input
+                type="text"
+                x-model="form.cnpj"
+              >
+            </label>
+            <label>
+              Razão Social:
+              <input
+                type="text"
+                x-model="form.razaoSocial"
+              >
+            </label>
+          </fieldset>
+        </template>
+
+        <div class="buttons">
+          <button
+            type="button"
+            @click="prevState"
+          >Anterior</button>
+          <button
+            type="button"
+            @click="nextState"
+          >Próximo</button>
+        </div>
+      </section>
+      <!-- END Estado: Documentos -->
+
+      <!-- START Estado: Endereço -->
+      <section x-show="currentState === 'endereco'">
+        <fieldset>
+          <h2>Endereço</h2>
+          <label>
+            CEP:
+            <input
+              type="text"
+              x-model="form.cep"
+              @change="getAddressByCep(form.cep)"
+            >
+          </label>
+          <label>
+            Logradouro:
+            <input
+              type="text"
+              x-model="form.logradouro"
+            >
+          </label>
+          <label>
+            Complemento:
+            <input
+              type="text"
+              x-model="form.complemento"
+            >
+          </label>
+          <label>
+            Bairro:
+            <input
+              type="text"
+              x-model="form.bairro"
+            >
+          </label>
+          <label>
+            Cidade:
+            <input
+              type="text"
+              x-model="form.cidade"
+            >
+          </label>
+          <label>
+            UF:
+            <input
+              type="text"
+              x-model="form.uf"
+            >
+          </label>
+          <div class="buttons">
+            <button
+              type="button"
+              @click="prevState"
+            >Anterior</button>
+            <button
+              type="button"
+              @click="nextState"
+            >Próximo</button>
+          </div>
+        </fieldset>
+      </section>
+      <!-- END Estado: Endereço -->
+
+      <!-- START Estado: Confirmação -->
+      <section x-show="currentState === 'confirmacao'">
+        <h2>Confirmação dos Dados</h2>
+        <div>
+          <h3>Dados Pessoais</h3>
+          <p><strong>Nome:</strong> <span x-text="form.nome"></span></p>
+          <p><strong>Email:</strong> <span x-text="form.email"></span></p>
+
+          <template x-if="tipo === 'fisica'">
+            <div>
+              <p><strong>CPF:</strong> <span x-text="form.cpf"></span></p>
+              <p><strong>RG:</strong> <span x-text="form.rg"></span></p>
+            </div>
+          </template>
+
+          <template x-if="tipo === 'juridica'">
+            <div>
+              <p><strong>CNPJ:</strong> <span x-text="form.cnpj"></span></p>
+              <p><strong>Razão Social:</strong> <span x-text="form.razaoSocial"></span></p>
+            </div>
+          </template>
+
+          <h3>Endereço</h3>
+          <p><strong>CEP:</strong> <span x-text="form.cep"></span></p>
+          <p><strong>Logradouro:</strong> <span x-text="form.logradouro"></span></p>
+          <p><strong>Complemento:</strong> <span x-text="form.complemento || '---'"></span></p>
+          <p><strong>Bairro:</strong> <span x-text="form.bairro"></span></p>
+          <p><strong>Cidade:</strong> <span x-text="form.cidade"></span></p>
+          <p><strong>UF:</strong> <span x-text="form.uf"></span></p>
+        </div>
+        <div class="buttons">
+          <button
+            type="button"
+            @click="prevState"
+          >Anterior</button>
+          <button type="submit">Finalizar Cadastro</button>
+        </div>
+      </section>
+      <!-- END Estado: Confirmação -->
+    </form>
+  </div>
+
+  <script src="assets/js/main.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,71 @@
+stateDiagram-v2
+    [*] --> Inicio
+    
+    state Inicio {
+        [*] --> EscolhaTipo
+        EscolhaTipo --> PessoaFisica : Seleciona PF
+        EscolhaTipo --> PessoaJuridica : Seleciona PJ
+    }
+    
+    state Identificacao {
+        [*] --> DadosBasicos
+        state DadosBasicos {
+            Nome
+            Email
+        }
+    }
+    
+    state Documentos {
+        state DocumentosPF {
+            CPF
+            RG
+        }
+        
+        state DocumentosPJ {
+            CNPJ
+            RazaoSocial
+        }
+    }
+    
+    state Endereco {
+        [*] --> DadosEndereco
+        state DadosEndereco {
+            CEP
+            Logradouro
+            Complemento
+            Cidade
+            UF
+        }
+    }
+    
+    state Confirmacao {
+        state ExibeDados {
+            DadosPessoais
+            DadosDocumentos
+            DadosEndereço
+        }
+    }
+    
+    Inicio --> Identificacao : Após escolha do tipo
+    
+    Identificacao --> Documentos : Próximo
+    Documentos --> Identificacao : Anterior
+    
+    Documentos --> Endereco : Próximo
+    Endereco --> Documentos : Anterior
+    
+    Endereco --> Confirmacao : Próximo
+    Confirmacao --> Endereco : Anterior
+    
+    Confirmacao --> [*] : Finalizar Cadastro
+    
+    note right of Documentos
+        Se PF: Mostra DocumentosPF
+        Se PJ: Mostra DocumentosPJ
+    end note
+    
+    note right of Confirmacao
+        Exibe todos os dados
+        preenchidos para revisão
+        final
+    end note
